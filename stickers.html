@@ -7,599 +7,30 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg: #080808;
-      --panel: #101010;
-      --panel-2: #0c0c0c;
-      --line: rgba(57, 255, 126, 0.22);
-      --text: #d9ffe7;
-      --muted: #7db794;
-      --green: #39ff7e;
-      --red: #ff3939;
-      --orange: #ff9d2f;
-      --shadow: 0 0 0 1px rgba(57,255,126,0.12), 0 10px 35px rgba(0,0,0,0.5);
-      --radius: 16px;
-    }
-
-    * { box-sizing: border-box; }
-    html, body {
-      margin: 0;
-      height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: "IBM Plex Mono", monospace;
-      overflow: hidden;
-    }
-
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      background:
-        radial-gradient(circle at top, rgba(57,255,126,0.05), transparent 28%),
-        linear-gradient(rgba(255,255,255,0.02), rgba(255,255,255,0.00));
-      mix-blend-mode: screen;
-    }
-
-    .app {
-      display: grid;
-      grid-template-columns: 360px 1fr;
-      gap: 18px;
-      height: 100vh;
-      padding: 18px;
-    }
-
-    .sidebar {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      min-height: 0;
-      overflow-y: auto;
-    }
-
-    .panel {
-      background: linear-gradient(180deg, rgba(16,16,16,0.98), rgba(10,10,10,0.96));
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 14px;
-      box-shadow: var(--shadow);
-    }
-
-    .panel h3 {
-      margin: 0 0 10px;
-      font-size: 13px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--green);
-    }
-
-    .panel p, .status {
-      margin: 0;
-      font-size: 12px;
-      line-height: 1.5;
-      color: var(--muted);
-    }
-
-    .api-row {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-
-    input[type="password"], input[type="text"] {
-      width: 100%;
-      background: #050505;
-      border: 1px solid rgba(57,255,126,0.25);
-      color: var(--text);
-      padding: 10px 12px;
-      border-radius: 10px;
-      outline: none;
-      font: inherit;
-      font-size: 12px;
-    }
-
-    input[type="password"]:focus, input[type="text"]:focus {
-      border-color: var(--green);
-      box-shadow: 0 0 0 3px rgba(57,255,126,0.12);
-    }
-
-    button {
-      background: #0d0d0d;
-      color: var(--green);
-      border: 1px solid rgba(57,255,126,0.35);
-      border-radius: 10px;
-      padding: 10px 12px;
-      font: inherit;
-      cursor: pointer;
-      transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
-      font-size: 12px;
-    }
-
-    button:hover { border-color: var(--green); background: rgba(57,255,126,0.06); }
-    button:active { transform: translateY(1px); }
-    button.danger { color: var(--red); border-color: rgba(255,57,57,0.35); }
-    button.danger:hover { background: rgba(255,57,57,0.08); border-color: var(--red); }
-
-    .upload-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .upload-zone {
-      position: relative;
-      min-height: 120px;
-      border: 1px dashed rgba(57,255,126,0.35);
-      border-radius: 14px;
-      background:
-        linear-gradient(180deg, rgba(57,255,126,0.04), rgba(57,255,126,0.02)),
-        #090909;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 12px;
-      cursor: pointer;
-      overflow: hidden;
-      transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
-    }
-
-    .upload-zone:hover,
-    .upload-zone.dragover {
-      border-color: var(--green);
-      background:
-        linear-gradient(180deg, rgba(57,255,126,0.08), rgba(57,255,126,0.03)),
-        #0a0a0a;
-      transform: translateY(-1px);
-    }
-
-    .upload-zone input { display: none; }
-    .upload-zone strong {
-      display: block;
-      margin-bottom: 6px;
-      color: var(--text);
-      font-size: 12px;
-    }
-    .upload-zone span {
-      font-size: 11px;
-      color: var(--muted);
-      line-height: 1.5;
-    }
-
-    .tray-wrap {
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
-      flex: 1;
-    }
-
-    .tray {
-      margin-top: 8px;
-      min-height: 80px;
-      max-height: 200px;
-      overflow-y: auto;
-      padding-right: 4px;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
-      gap: 10px;
-      align-content: start;
-    }
-
-    .tray-item {
-      position: relative;
-      width: 72px;
-      height: 72px;
-      border: 1px solid rgba(57,255,126,0.25);
-      border-radius: 12px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      cursor: grab;
-      user-select: none;
-    }
-
-    .tray-item:hover { border-color: rgba(57,255,126,0.7); }
-    .tray-item img {
-      max-width: 64px;
-      max-height: 64px;
-      object-fit: contain;
-      pointer-events: none;
-    }
-
-    .tray-delete {
-      position: absolute;
-      top: 5px;
-      right: 5px;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: rgba(0,0,0,0.78);
-      color: #fff;
-      border: 1px solid rgba(255,57,57,0.6);
-      font-size: 11px;
-      display: grid;
-      place-items: center;
-      opacity: 0;
-      transition: opacity 0.12s ease;
-      cursor: pointer;
-      z-index: 1;
-      padding: 0;
-      line-height: 1;
-    }
-
-    .tray-item:hover .tray-delete { opacity: 1; }
-
-    .spinner {
-      width: 24px;
-      height: 24px;
-      border: 2px solid rgba(57,255,126,0.15);
-      border-top-color: var(--green);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .actions {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 8px;
-    }
-
-    .main {
-      min-width: 0;
-      min-height: 0;
-      display: grid;
-      place-items: center;
-      position: relative;
-    }
-
-    .stage {
-      width: min(100%, 980px);
-      height: min(100%, 760px);
-      display: grid;
-      place-items: center;
-      position: relative;
-      border-radius: 24px;
-      border: 1px solid rgba(57,255,126,0.14);
-      background:
-        linear-gradient(180deg, rgba(57,255,126,0.03), rgba(57,255,126,0.01)),
-        radial-gradient(circle at center, rgba(57,255,126,0.05), transparent 45%),
-        #090909;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
-      overflow: hidden;
-    }
-
-    .sticker-layer {
-      position: absolute;
-      inset: 0;
-      z-index: 6;
-      pointer-events: none;
-    }
-
-    .stage-grid {
-      position: absolute;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(57,255,126,0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(57,255,126,0.05) 1px, transparent 1px);
-      background-size: 24px 24px;
-      mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
-      pointer-events: none;
-    }
-
-    .laptop {
-      z-index: 2;
-      position: relative;
-      width: 620px;
-      height: 400px;
-      border-radius: 28px;
-      overflow: hidden;
-      box-shadow:
-        0 36px 90px rgba(0,0,0,0.6),
-        inset 0 0 0 1px rgba(255,255,255,0.08),
-        inset 0 1px 0 rgba(255,255,255,0.15);
-      background:
-        radial-gradient(circle at 30% 18%, rgba(255,255,255,0.28), rgba(255,255,255,0.03) 30%, transparent 46%),
-        linear-gradient(135deg, #777 0%, #5d5d5d 15%, #9a9a9a 34%, #626262 54%, #8b8b8b 70%, #535353 100%);
-    }
-
-    .laptop::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: repeating-linear-gradient(
-        180deg,
-        rgba(255,255,255,0.038) 0px,
-        rgba(255,255,255,0.038) 1px,
-        rgba(0,0,0,0.022) 2px,
-        rgba(0,0,0,0.022) 3px,
-        transparent 5px,
-        transparent 6px
-      );
-      mix-blend-mode: soft-light;
-      opacity: 0.45;
-      pointer-events: none;
-    }
-
-    .laptop::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border-radius: inherit;
-      box-shadow: inset 0 0 80px rgba(0,0,0,0.2);
-      pointer-events: none;
-    }
-
-    .asus-logo {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 62px;
-      font-style: italic;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      color: rgba(255,255,255,0.16);
-      text-shadow: 0 0 12px rgba(255,255,255,0.08);
-      user-select: none;
-      pointer-events: none;
-    }
-
-    .laptop-hint {
-      position: absolute;
-      bottom: 16px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 11px;
-      color: rgba(255,255,255,0.45);
-      pointer-events: none;
-      user-select: none;
-      white-space: nowrap;
-    }
-
-    .canvas-sticker {
-      position: absolute;
-      touch-action: none;
-      user-select: none;
-      transform-origin: center center;
-      cursor: move;
-      pointer-events: auto;
-      z-index: 8;
-    }
-
-    .canvas-sticker img {
-      display: block;
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      pointer-events: none;
-      user-select: none;
-      -webkit-user-drag: none;
-    }
-
-    .canvas-sticker.selected {
-      outline: 2px dashed var(--green);
-      outline-offset: 4px;
-    }
-
-    .handle {
-      position: absolute;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      border: 2px solid rgba(0,0,0,0.9);
-      box-shadow: 0 2px 10px rgba(0,0,0,0.35);
-      z-index: 2;
-    }
-
-    .handle.rotate {
-      background: var(--orange);
-      left: 50%;
-      top: -22px;
-      transform: translateX(-50%);
-      cursor: grab;
-    }
-
-    .handle.resize {
-      background: var(--green);
-      right: -12px;
-      bottom: -12px;
-      cursor: nwse-resize;
-    }
-
-    .handle.delete {
-      background: var(--red);
-      right: -12px;
-      top: -12px;
-      cursor: pointer;
-      display: grid;
-      place-items: center;
-      font-size: 10px;
-      color: #fff;
-      line-height: 1;
-    }
-
-    .drop-overlay {
-      position: absolute;
-      inset: 14px;
-      border: 2px dashed rgba(57,255,126,0.78);
-      border-radius: 20px;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      background: rgba(57,255,126,0.08);
-      color: var(--green);
-      font-size: 16px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      text-shadow: 0 0 12px rgba(57,255,126,0.2);
-      pointer-events: none;
-      z-index: 20;
-    }
-
-    .drop-overlay.visible { display: flex; }
-
-    .ghost {
-      position: fixed;
-      width: 90px;
-      height: 90px;
-      object-fit: contain;
-      pointer-events: none;
-      z-index: 9999;
-      transform: translate(-50%, -50%);
-      filter: drop-shadow(0 8px 18px rgba(0,0,0,0.45));
-    }
-
-    .toast-stack {
-      position: fixed;
-      left: 50%;
-      bottom: 22px;
-      transform: translateX(-50%);
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      z-index: 99999;
-      pointer-events: none;
-    }
-
-    .toast {
-      min-width: 260px;
-      max-width: min(92vw, 520px);
-      padding: 12px 14px;
-      border-radius: 12px;
-      background: rgba(7,7,7,0.95);
-      border: 1px solid rgba(57,255,126,0.28);
-      color: var(--text);
-      box-shadow: 0 14px 28px rgba(0,0,0,0.4);
-      transform: translateY(18px);
-      opacity: 0;
-      animation: toast-in 0.22s ease forwards;
-      font-size: 12px;
-    }
-
-    .toast.ok { border-color: rgba(57,255,126,0.55); }
-    .toast.err { border-color: rgba(255,57,57,0.55); color: #ffd9d9; }
-
-    @keyframes toast-in {
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    @media (max-width: 1200px) {
-      .app { grid-template-columns: 300px 1fr; }
-      .laptop { transform: scale(0.88); }
-    }
-
-    @media (max-width: 960px) {
-      html, body { overflow: auto; }
-      .app { grid-template-columns: 1fr; height: auto; min-height: 100vh; }
-      .stage { min-height: 620px; }
-      .upload-grid { grid-template-columns: 1fr; }
-    }
-
-    /* ── API KEY MODAL ── */
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      z-index: 99999;
-      background: rgba(0,0,0,0.92);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      backdrop-filter: blur(6px);
-    }
-    .modal-backdrop.hidden { display: none; }
-    .modal {
-      width: min(480px, 92vw);
-      background: #0d0d0d;
-      border: 1px solid rgba(57,255,126,0.28);
-      border-radius: 20px;
-      padding: 32px 28px 28px;
-      box-shadow: 0 0 0 1px rgba(57,255,126,0.08), 0 32px 80px rgba(0,0,0,0.8);
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-      animation: modal-in 0.25s cubic-bezier(0.16,1,0.3,1) forwards;
-    }
-    @keyframes modal-in {
-      from { opacity:0; transform:translateY(18px) scale(0.97); }
-      to   { opacity:1; transform:translateY(0) scale(1); }
-    }
-    .modal-logo { font-size:11px; letter-spacing:4px; color:var(--green); text-transform:uppercase; }
-    .modal h2 { margin:0; font-size:20px; font-weight:700; font-style:italic; color:var(--text); line-height:1.2; }
-    .modal-steps { display:flex; flex-direction:column; gap:10px; }
-    .modal-step { display:flex; align-items:flex-start; gap:12px; font-size:12px; color:var(--muted); line-height:1.6; }
-    .modal-step-num {
-      flex-shrink:0; width:22px; height:22px; border-radius:50%;
-      border:1px solid rgba(57,255,126,0.3); color:var(--green);
-      font-size:10px; font-weight:700; display:grid; place-items:center; margin-top:2px;
-    }
-    .modal-step a { color:var(--green); text-decoration:none; border-bottom:1px solid rgba(57,255,126,0.3); }
-    .modal-step a:hover { border-color:var(--green); }
-    .modal-divider { height:1px; background:rgba(57,255,126,0.1); }
-    .modal-input-wrap { display:flex; flex-direction:column; gap:8px; }
-    .modal-input-label { font-size:10px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; }
-    .modal-input-row { display:flex; gap:8px; }
-    .modal-input-row input {
-      flex:1; background:#060606; border:1px solid rgba(57,255,126,0.2);
-      color:var(--text); padding:11px 14px; border-radius:10px; outline:none;
-      font:inherit; font-size:12px; letter-spacing:1px;
-      transition:border-color 0.15s, box-shadow 0.15s;
-    }
-    .modal-input-row input:focus { border-color:var(--green); box-shadow:0 0 0 3px rgba(57,255,126,0.1); }
-    .modal-input-row input.shake { animation: shake 0.35s ease; }
-    @keyframes shake {
-      0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 60%{transform:translateX(6px)} 80%{transform:translateX(-3px)}
-    }
-    .modal-submit {
-      flex-shrink:0; background:var(--green); color:#000; border:none;
-      border-radius:10px; padding:11px 18px; font:inherit; font-size:12px;
-      font-weight:700; cursor:pointer; letter-spacing:1px;
-      transition:opacity 0.15s, transform 0.12s;
-    }
-    .modal-submit:hover { opacity:0.88; }
-    .modal-submit:active { transform:translateY(1px); }
-    .modal-submit:disabled { opacity:0.4; cursor:not-allowed; }
-    .modal-status { font-size:11px; letter-spacing:0.5px; min-height:16px; display:flex; align-items:center; gap:8px; }
-    .modal-status.err { color:var(--red); }
-    .modal-status.validating { color:var(--muted); }
-    .spin-sm {
-      width:12px; height:12px; border:1.5px solid rgba(57,255,126,0.2);
-      border-top-color:var(--green); border-radius:50%;
-      animation:spin 0.7s linear infinite; flex-shrink:0;
-    }
-  </style>
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-  <!-- API KEY MODAL -->
+  <!-- ── API KEY MODAL ─────────────────────────────────────────────── -->
   <div class="modal-backdrop" id="apiModal">
     <div class="modal">
       <div class="modal-logo">// sticker_planner</div>
       <h2>API Key Required</h2>
-
       <div class="modal-steps">
         <div class="modal-step">
           <div class="modal-step-num">1</div>
-          <div>Go to <a href="https://www.remove.bg/users/sign_up" target="_blank">remove.bg</a> and create a free account — gives you <strong>50 free credits/month</strong>.</div>
+          <div>Go to <a href="https://www.remove.bg/users/sign_up" target="_blank">remove.bg</a> and create a free account — 50 free credits/month.</div>
         </div>
         <div class="modal-step">
           <div class="modal-step-num">2</div>
-          <div>After login, open <a href="https://www.remove.bg/api" target="_blank">remove.bg/api</a> and click <strong>"Get API Key"</strong> under the API section.</div>
+          <div>Open <a href="https://www.remove.bg/api" target="_blank">remove.bg/api</a> and click <strong>"Get API Key"</strong>.</div>
         </div>
         <div class="modal-step">
           <div class="modal-step-num">3</div>
-          <div>Copy the key and paste it below. It will be saved locally — you won't be asked again.</div>
+          <div>Paste it below — saved locally, you won't be asked again.</div>
         </div>
       </div>
-
       <div class="modal-divider"></div>
-
       <div class="modal-input-wrap">
         <div class="modal-input-label">Your API Key</div>
         <div class="modal-input-row">
@@ -611,6 +42,7 @@
     </div>
   </div>
 
+  <!-- ── APP SHELL ──────────────────────────────────────────────────── -->
   <div class="app">
     <aside class="sidebar">
 
@@ -620,697 +52,105 @@
         <div class="upload-grid">
           <label class="upload-zone" id="autoZone">
             <input id="autoInput" type="file" accept="image/*" multiple />
-            <div>
-              <strong>Add Photos</strong>
-              <span>Any format.<br>BG removed automatically.</span>
-            </div>
+            <div><strong>Add Photos</strong><span>Any format.<br>BG removed auto.</span></div>
           </label>
           <label class="upload-zone" id="precutZone">
             <input id="precutInput" type="file" accept="image/png,image/webp" multiple />
-            <div>
-              <strong>Pre-cut PNG</strong>
-              <span>PNG / WEBP only.<br>Added directly.</span>
-            </div>
+            <div><strong>Pre-cut PNG</strong><span>PNG / WEBP only.<br>Added directly.</span></div>
           </label>
         </div>
       </section>
 
-      <!-- Tray -->
+      <!-- Sticker Tray -->
       <section class="panel tray-wrap">
         <h3>Sticker Tray</h3>
         <p>Drag stickers onto the laptop lid.</p>
         <div id="tray" class="tray"></div>
       </section>
 
-      <!-- Actions -->
+      <!-- Phase 3: Sticker Packs -->
+      <section class="panel">
+        <h3>Sticker Packs</h3>
+        <p>Click any sticker to add it to your tray.</p>
+        <div id="packGrid" class="pack-grid"></div>
+      </section>
+
+      <!-- Phase 1 & 2: Actions -->
       <section class="panel">
         <h3>Actions</h3>
         <div class="actions">
-          <button id="exportBtn">Export as PNG</button>
-          <button id="deselectBtn">Deselect</button>
-          <button id="clearBtn" class="danger">Clear Laptop</button>
+          <!-- Phase 1: Undo/Redo -->
+          <button id="undoBtn" title="Ctrl+Z">↩ Undo</button>
+          <button id="redoBtn" title="Ctrl+Y">↪ Redo</button>
+          <!-- Phase 1: Layer controls -->
+          <button id="layerUpBtn">▲ Forward</button>
+          <button id="layerDownBtn">▼ Backward</button>
+          <!-- Phase 1: Flip -->
+          <button id="flipHBtn">↔ Flip H</button>
+          <button id="flipVBtn">↕ Flip V</button>
+          <!-- Phase 2: Snap to grid -->
+          <button id="snapToggle">⊞ Snap Grid</button>
+          <!-- Phase 3: Share link -->
+          <button id="shareLinkBtn">🔗 Share Link</button>
+          <!-- Phase 3: Export (full width) -->
+          <button id="exportBtn" class="full">⬇ Export as PNG</button>
+          <button id="deselectBtn" class="full">Deselect</button>
+          <button id="clearBtn" class="danger full">Clear Laptop</button>
         </div>
       </section>
+
+      <!-- Phase 2: Swap Device -->
+      <section class="panel">
+        <h3>Swap Device</h3>
+        <p>Upload any device image as your canvas.</p>
+        <label class="upload-zone" style="min-height:80px;margin-top:8px;">
+          <input id="deviceInput" type="file" accept="image/*" />
+          <div><strong>Upload Device PNG</strong><span>MacBook, Surface, etc.</span></div>
+        </label>
+      </section>
+
+      <!-- Phase 2: Tint selected sticker -->
+      <section class="panel">
+        <h3>Sticker Tint</h3>
+        <p>Select a sticker to adjust its appearance.</p>
+        <div id="tintPanel" class="tint-panel">
+          <div class="tint-row">
+            <label>Hue</label>
+            <input type="range" id="hueSlider" min="0" max="360" value="0" />
+            <span id="hueVal">0°</span>
+          </div>
+          <div class="tint-row">
+            <label>Saturation</label>
+            <input type="range" id="satSlider" min="0" max="200" value="100" />
+            <span id="satVal">100%</span>
+          </div>
+          <div class="tint-row">
+            <label>Brightness</label>
+            <input type="range" id="brSlider" min="20" max="200" value="100" />
+            <span id="brVal">100%</span>
+          </div>
+        </div>
+      </section>
+
     </aside>
 
+    <!-- ── STAGE ────────────────────────────────────────────────────── -->
     <main class="main">
       <div class="stage" id="stage">
         <div class="stage-grid"></div>
         <div id="laptop" class="laptop" aria-label="Laptop sticker canvas">
           <div class="asus-logo">ASUS</div>
-          <div class="laptop-hint">Drop stickers or image files here</div>
+          <div class="laptop-hint">Drop stickers here • Shift+click to multi-select</div>
           <div id="dropOverlay" class="drop-overlay">Drop Sticker</div>
-          <div id="stickerLayer" class="sticker-layer"></div>
+          <div id="stickerLayer" class="sticker-layer">
+            <div id="selectionBox"></div>
+          </div>
         </div>
       </div>
     </main>
   </div>
 
   <div id="toastStack" class="toast-stack"></div>
-
-  <script>
-    // ── ELEMENTS ──────────────────────────────────────────────────────────────
-    const tray         = document.getElementById('tray');
-    const stage        = document.getElementById('stage');
-    const stickerLayer = document.getElementById('stickerLayer');
-    const laptop       = document.getElementById('laptop');
-    const dropOverlay  = document.getElementById('dropOverlay');
-    const autoInput    = document.getElementById('autoInput');
-    const precutInput  = document.getElementById('precutInput');
-    const autoZone     = document.getElementById('autoZone');
-    const precutZone   = document.getElementById('precutZone');
-    const exportBtn    = document.getElementById('exportBtn');
-    const deselectBtn  = document.getElementById('deselectBtn');
-    const clearBtn     = document.getElementById('clearBtn');
-    const toastStack   = document.getElementById('toastStack');
-
-    // ── STATE ─────────────────────────────────────────────────────────────────
-    let apiKey = '';
-
-    // ── API KEY MODAL ──────────────────────────────────────────────────────────
-    (function initApiModal() {
-      const saved = localStorage.getItem('rbg_key');
-      const backdrop = document.getElementById('apiModal');
-      const input    = document.getElementById('modalKeyInput');
-      const btn      = document.getElementById('modalSubmit');
-      const status   = document.getElementById('modalStatus');
-
-      function setStatus(msg, cls) {
-        status.className = 'modal-status ' + (cls || '');
-        status.innerHTML = cls === 'validating'
-          ? '<div class="spin-sm"></div>' + msg
-          : msg;
-      }
-
-      async function validate(key) {
-        // Validate by making a tiny test request — send a 1x1 white PNG
-        const pixel = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI6QAAAABJRU5ErkJggg==';
-        const blob  = await (await fetch('data:image/png;base64,' + pixel)).blob();
-        const fd    = new FormData();
-        fd.append('image_file', blob, 'test.png');
-        fd.append('size', 'auto');
-        const res = await fetch('https://api.remove.bg/v1.0/removebg', {
-          method: 'POST', headers: { 'X-Api-Key': key }, body: fd
-        });
-        // 402 = out of credits but key is valid; 200 = valid; anything else = bad key
-        return res.status === 200 || res.status === 402;
-      }
-
-      async function submit() {
-        const val = input.value.trim();
-        if (!val) {
-          input.classList.add('shake');
-          setTimeout(() => input.classList.remove('shake'), 400);
-          setStatus('Paste your API key first.', 'err');
-          return;
-        }
-        btn.disabled = true;
-        setStatus('Validating key…', 'validating');
-        try {
-          const ok = await validate(val);
-          if (ok) {
-            apiKey = val;
-            localStorage.setItem('rbg_key', val);
-            backdrop.classList.add('hidden');
-            setStatus('', '');
-          } else {
-            setStatus('Invalid key — check and try again.', 'err');
-            input.classList.add('shake');
-            setTimeout(() => input.classList.remove('shake'), 400);
-          }
-        } catch(e) {
-          setStatus('Network error — check your connection.', 'err');
-        }
-        btn.disabled = false;
-      }
-
-      if (saved) {
-        // Already have a saved key — validate silently then unlock
-        apiKey = saved;
-        backdrop.classList.add('hidden');
-        // Silent re-validation in background (optional — keeps UX fast)
-      } else {
-        // Show modal, block app
-        backdrop.classList.remove('hidden');
-      }
-
-      btn.addEventListener('click', submit);
-      input.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
-    })();
-    let trayItems       = [];
-    let stickers        = [];
-    let selectedId      = null;
-    let dragGhost       = null;
-    let dropDepth       = 0;
-    let stickerCounter  = 1;
-    let trayCounter     = 1;
-
-    // ── TOAST ─────────────────────────────────────────────────────────────────
-    function toast(message, type = 'ok') {
-      const el = document.createElement('div');
-      el.className = `toast ${type}`;
-      el.textContent = message;
-      toastStack.appendChild(el);
-      setTimeout(() => {
-        el.style.transition = 'opacity 0.18s ease, transform 0.18s ease';
-        el.style.opacity = '0';
-        el.style.transform = 'translateY(10px)';
-        setTimeout(() => el.remove(), 220);
-      }, 2200);
-    }
-
-    // ── HELPERS ───────────────────────────────────────────────────────────────
-    function isPrecut(file) { return ['image/png','image/webp'].includes(file.type); }
-    function isImage(file)  { return file.type.startsWith('image/'); }
-    function clamp(n,a,b)   { return Math.min(b, Math.max(a, n)); }
-
-    function fileToDataURL(file) {
-      return new Promise((res, rej) => {
-        const r = new FileReader();
-        r.onload = () => res(r.result);
-        r.onerror = rej;
-        r.readAsDataURL(file);
-      });
-    }
-
-    function loadImage(src) {
-      return new Promise((res, rej) => {
-        const img = new Image();
-        img.onload  = () => res(img);
-        img.onerror = rej;
-        img.src = src;
-      });
-    }
-
-    async function fileToImageData(file) {
-      const src = await fileToDataURL(file);
-      const img = await loadImage(src);
-      return { src, width: img.naturalWidth, height: img.naturalHeight };
-    }
-
-    function fitSize(w, h, max = 120) {
-      const ratio = w / h;
-      if (w >= h) { w = Math.min(max, w); h = w / ratio; }
-      else        { h = Math.min(max, h); w = h * ratio; }
-      return { w: Math.max(28, w), h: Math.max(28, h) };
-    }
-
-    // ── remove.bg API ─────────────────────────────────────────────────────────
-    async function removeBg(file) {
-      if (!apiKey) throw new Error('No API key. Save one in the sidebar.');
-      const fd = new FormData();
-      fd.append('image_file', file, file.name || 'image');
-      fd.append('size', 'auto');
-      const res = await fetch('https://api.remove.bg/v1.0/removebg', {
-        method: 'POST',
-        headers: { 'X-Api-Key': apiKey },
-        body: fd
-      });
-      if (!res.ok) {
-        let msg = `remove.bg error (${res.status})`;
-        try {
-          const d = await res.json();
-          const t = d?.errors?.[0]?.title || d?.errors?.[0]?.detail;
-          if (t) msg = t;
-        } catch(_) {}
-        throw new Error(msg);
-      }
-      const blob = await res.blob();
-      const src  = URL.createObjectURL(blob);
-      const img  = await loadImage(src);
-      return { src, width: img.naturalWidth, height: img.naturalHeight };
-    }
-
-    // ── TRAY ──────────────────────────────────────────────────────────────────
-    function addTrayItem(src, meta = {}) {
-      const item = {
-        id:     `tray-${trayCounter++}`,
-        src,
-        width:  meta.width  || 256,
-        height: meta.height || 256,
-        name:   meta.name   || 'sticker'
-      };
-      trayItems.push(item);
-      renderTray();
-      return item;
-    }
-
-    function removeTrayItem(id) {
-      trayItems = trayItems.filter(t => t.id !== id);
-      renderTray();
-    }
-
-    function renderTray() {
-      tray.innerHTML = '';
-      trayItems.forEach(item => {
-        const el  = document.createElement('div');
-        el.className  = 'tray-item';
-        el.draggable  = true;
-        el.dataset.id = item.id;
-
-        const img = document.createElement('img');
-        img.src = item.src;
-        img.alt = item.name;
-        el.appendChild(img);
-
-        const del = document.createElement('button');
-        del.className   = 'tray-delete';
-        del.type        = 'button';
-        del.textContent = '×';
-        del.addEventListener('click', e => { e.stopPropagation(); removeTrayItem(item.id); });
-        el.appendChild(del);
-
-        el.addEventListener('dragstart', e => {
-          e.dataTransfer.setData('text/plain', item.id);
-          e.dataTransfer.effectAllowed = 'copy';
-          const tiny = document.createElement('canvas');
-          tiny.width = 1; tiny.height = 1;
-          e.dataTransfer.setDragImage(tiny, 0, 0);
-          createGhost(item.src, e.clientX, e.clientY);
-          showDropOverlay(true);
-        });
-
-        el.addEventListener('dragend', () => {
-          destroyGhost();
-          showDropOverlay(false);
-        });
-
-        tray.appendChild(el);
-      });
-    }
-
-    // ── GHOST ─────────────────────────────────────────────────────────────────
-    function createGhost(src, x, y) {
-      destroyGhost();
-      dragGhost = document.createElement('img');
-      dragGhost.className = 'ghost';
-      dragGhost.src = src;
-      document.body.appendChild(dragGhost);
-      moveGhost(x, y);
-    }
-
-    function moveGhost(x, y) {
-      if (!dragGhost) return;
-      dragGhost.style.left = `${x}px`;
-      dragGhost.style.top  = `${y}px`;
-    }
-
-    function destroyGhost() {
-      if (dragGhost) { dragGhost.remove(); dragGhost = null; }
-    }
-
-    function showDropOverlay(show) {
-      dropOverlay.classList.toggle('visible', !!show);
-    }
-
-    // ── PLACE STICKER ─────────────────────────────────────────────────────────
-    function placeStickerFromTray(item, clientX, clientY) {
-      const rect = laptop.getBoundingClientRect();
-      placeSticker({
-        src:    item.src,
-        width:  item.width,
-        height: item.height,
-        x:      clientX - rect.left,
-        y:      clientY - rect.top,
-        name:   item.name
-      });
-    }
-
-    function placeSticker({ src, width, height, x, y, name }) {
-      const size = fitSize(width || 256, height || 256, 120);
-      const s = {
-        id:   `sticker-${stickerCounter++}`,
-        src,
-        name: name || 'sticker',
-        x:    clamp(x - size.w / 2, 0, laptop.clientWidth  - size.w),
-        y:    clamp(y - size.h / 2, 0, laptop.clientHeight - size.h),
-        w:    size.w,
-        h:    size.h,
-        rot:  0
-      };
-      stickers.push(s);
-      renderStickers();
-      selectSticker(s.id);
-      return s;
-    }
-
-    function selectSticker(id)  { selectedId = id;   renderStickers(); }
-    function deselectSticker()  { selectedId = null;  renderStickers(); }
-
-    function removeSticker(id) {
-      stickers = stickers.filter(s => s.id !== id);
-      if (selectedId === id) selectedId = null;
-      renderStickers();
-    }
-
-    function clearLaptop() {
-      stickers = []; selectedId = null; renderStickers();
-    }
-
-    function getSticker(id) { return stickers.find(s => s.id === id); }
-
-    // ── RENDER STICKERS ───────────────────────────────────────────────────────
-    function renderStickers() {
-      stickerLayer.querySelectorAll('.canvas-sticker').forEach(el => el.remove());
-
-      stickers.forEach(sticker => {
-        const el = document.createElement('div');
-        el.className  = 'canvas-sticker' + (sticker.id === selectedId ? ' selected' : '');
-        el.dataset.id = sticker.id;
-        el.style.cssText = `left:${sticker.x}px;top:${sticker.y}px;width:${sticker.w}px;height:${sticker.h}px;transform:rotate(${sticker.rot}rad);`;
-
-        const img = document.createElement('img');
-        img.src = sticker.src;
-        img.alt = sticker.name;
-        el.appendChild(img);
-
-        const hRot = document.createElement('div'); hRot.className = 'handle rotate';
-        const hRes = document.createElement('div'); hRes.className = 'handle resize';
-        const hDel = document.createElement('div'); hDel.className = 'handle delete';
-        hDel.textContent = '×';
-        el.append(hRot, hRes, hDel);
-
-        // move
-        el.addEventListener('pointerdown', e => {
-          if ([hRot, hRes, hDel].includes(e.target)) return;
-          e.preventDefault(); e.stopPropagation();
-          selectSticker(sticker.id);
-          startMove(e, sticker.id);
-        });
-
-        el.addEventListener('click', e => { e.stopPropagation(); selectSticker(sticker.id); });
-
-        hRot.addEventListener('pointerdown', e => {
-          e.preventDefault(); e.stopPropagation();
-          selectSticker(sticker.id);
-          startRotate(e, sticker.id);
-        });
-
-        hRes.addEventListener('pointerdown', e => {
-          e.preventDefault(); e.stopPropagation();
-          selectSticker(sticker.id);
-          startResize(e, sticker.id);
-        });
-
-        hDel.addEventListener('pointerdown', e => {
-          e.stopPropagation();
-          removeSticker(sticker.id);
-        });
-
-        stickerLayer.appendChild(el);
-      });
-    }
-
-    // ── INTERACTIONS ──────────────────────────────────────────────────────────
-    function startMove(e, id) {
-      const s = getSticker(id); if (!s) return;
-      const lr = laptop.getBoundingClientRect();
-      const sx = e.clientX - lr.left - s.x;
-      const sy = e.clientY - lr.top  - s.y;
-      const onMove = ev => {
-        ev.preventDefault();
-        s.x = clamp(ev.clientX - lr.left - sx, -s.w * 0.5, laptop.clientWidth  - s.w * 0.5);
-        s.y = clamp(ev.clientY - lr.top  - sy, -s.h * 0.5, laptop.clientHeight - s.h * 0.5);
-        renderStickers();
-      };
-      const onUp = () => {
-        window.removeEventListener('pointermove', onMove);
-        window.removeEventListener('pointerup',   onUp);
-      };
-      window.addEventListener('pointermove', onMove, { passive: false });
-      window.addEventListener('pointerup',   onUp);
-    }
-
-    function startRotate(e, id) {
-      const s = getSticker(id); if (!s) return;
-      const onMove = ev => {
-        const rect = laptop.getBoundingClientRect();
-        const cx = rect.left + s.x + s.w / 2;
-        const cy = rect.top  + s.y + s.h / 2;
-        s.rot = Math.atan2(ev.clientY - cy, ev.clientX - cx) + Math.PI / 2;
-        renderStickers();
-      };
-      const onUp = () => {
-        window.removeEventListener('pointermove', onMove);
-        window.removeEventListener('pointerup',   onUp);
-      };
-      window.addEventListener('pointermove', onMove);
-      window.addEventListener('pointerup',   onUp);
-    }
-
-    function startResize(e, id) {
-      const s = getSticker(id); if (!s) return;
-      const sx = e.clientX, sy = e.clientY;
-      const sw = s.w, sh = s.h, aspect = sw / sh;
-      const onMove = ev => {
-        const delta = Math.max(ev.clientX - sx, ev.clientY - sy);
-        let nw = Math.max(24, sw + delta);
-        let nh = nw / aspect;
-        if (s.x + nw > laptop.clientWidth)  { nw = laptop.clientWidth  - s.x; nh = nw / aspect; }
-        if (s.y + nh > laptop.clientHeight) { nh = laptop.clientHeight - s.y; nw = nh * aspect; }
-        s.w = Math.max(24, nw);
-        s.h = Math.max(24, nh);
-        renderStickers();
-      };
-      const onUp = () => {
-        window.removeEventListener('pointermove', onMove);
-        window.removeEventListener('pointerup',   onUp);
-      };
-      window.addEventListener('pointermove', onMove);
-      window.addEventListener('pointerup',   onUp);
-    }
-
-    // ── FILE HANDLING ─────────────────────────────────────────────────────────
-    function makeSpinner() {
-      const tile = document.createElement('div');
-      tile.className = 'tray-item';
-      tile.innerHTML = '<div class="spinner"></div>';
-      tray.appendChild(tile);
-      return tile;
-    }
-
-    async function handleAutoFiles(fileList) {
-      const files = Array.from(fileList || []).filter(isImage);
-      for (const file of files) {
-        const sp = makeSpinner();
-        try {
-          const result = await removeBg(file);
-          addTrayItem(result.src, { width: result.width, height: result.height, name: file.name });
-          toast(`Processed: ${file.name}`, 'ok');
-        } catch(err) {
-          toast(`${file.name}: ${err.message}`, 'err');
-        } finally { sp.remove(); }
-      }
-    }
-
-    async function handlePrecutFiles(fileList) {
-      const files = Array.from(fileList || []).filter(isPrecut);
-      for (const file of files) {
-        const sp = makeSpinner();
-        try {
-          const data = await fileToImageData(file);
-          addTrayItem(data.src, { width: data.width, height: data.height, name: file.name });
-          toast(`Added: ${file.name}`, 'ok');
-        } catch(err) {
-          toast(`Failed: ${file.name}`, 'err');
-        } finally { sp.remove(); }
-      }
-    }
-
-    async function handleOSDrop(files, clientX, clientY) {
-      const list = Array.from(files || []).filter(isImage);
-      if (!list.length) return;
-      const rect = laptop.getBoundingClientRect();
-      const dx = clientX - rect.left;
-      const dy = clientY - rect.top;
-
-      for (const file of list) {
-        try {
-          if (isPrecut(file)) {
-            const data = await fileToImageData(file);
-            placeSticker({ src: data.src, width: data.width, height: data.height, x: dx, y: dy, name: file.name });
-            toast(`Placed: ${file.name}`, 'ok');
-          } else {
-            const result = await removeBg(file);
-            placeSticker({ src: result.src, width: result.width, height: result.height, x: dx, y: dy, name: file.name });
-            toast(`Processed & placed: ${file.name}`, 'ok');
-          }
-        } catch(err) {
-          toast(`${file.name}: ${err.message}`, 'err');
-        }
-      }
-    }
-
-    // ── UPLOAD ZONE EVENTS ────────────────────────────────────────────────────
-    function setupZoneHover(zone) {
-      zone.addEventListener('dragenter', e => { e.preventDefault(); zone.classList.add('dragover'); });
-      zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('dragover'); });
-      zone.addEventListener('dragleave', e => { zone.classList.remove('dragover'); });
-      zone.addEventListener('drop',      e => { zone.classList.remove('dragover'); });
-    }
-
-    autoInput.addEventListener('change',   e => handleAutoFiles(e.target.files));
-    precutInput.addEventListener('change', e => handlePrecutFiles(e.target.files));
-
-    autoZone.addEventListener('drop', e => {
-      e.preventDefault();
-      autoZone.classList.remove('dragover');
-      handleAutoFiles(e.dataTransfer.files);
-    });
-
-    precutZone.addEventListener('drop', e => {
-      e.preventDefault();
-      precutZone.classList.remove('dragover');
-      handlePrecutFiles(e.dataTransfer.files);
-    });
-
-    setupZoneHover(autoZone);
-    setupZoneHover(precutZone);
-
-    // ── STAGE DRAG & DROP ─────────────────────────────────────────────────────
-    stage.addEventListener('click', e => {
-      const ignore = [stage, stickerLayer, laptop,
-        document.querySelector('.asus-logo'),
-        document.querySelector('.laptop-hint')];
-      if (ignore.includes(e.target)) deselectSticker();
-    });
-
-    stage.addEventListener('dragenter', e => {
-      e.preventDefault();
-      dropDepth++;
-      showDropOverlay(true);
-    });
-
-    stage.addEventListener('dragover', e => {
-      e.preventDefault();
-      moveGhost(e.clientX, e.clientY);
-    });
-
-    stage.addEventListener('dragleave', e => {
-      e.preventDefault();
-      dropDepth = Math.max(0, dropDepth - 1);
-      if (dropDepth === 0) showDropOverlay(false);
-    });
-
-    stage.addEventListener('drop', async e => {
-      e.preventDefault();
-      dropDepth = 0;
-      showDropOverlay(false);
-      destroyGhost();
-
-      const trayId   = e.dataTransfer.getData('text/plain');
-      const trayItem = trayItems.find(t => t.id === trayId);
-
-      if (trayItem) {
-        placeStickerFromTray(trayItem, e.clientX, e.clientY);
-        return;
-      }
-
-      if (e.dataTransfer.files?.length) {
-        await handleOSDrop(e.dataTransfer.files, e.clientX, e.clientY);
-      }
-    });
-
-    document.addEventListener('dragover', e => { if (dragGhost) moveGhost(e.clientX, e.clientY); });
-
-    // ── KEYBOARD ──────────────────────────────────────────────────────────────
-    window.addEventListener('keydown', e => {
-      if (e.key === 'Escape') deselectSticker();
-      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedId) {
-        const a = document.activeElement;
-        if (!a || (a.tagName !== 'INPUT' && a.tagName !== 'TEXTAREA' && !a.isContentEditable)) {
-          removeSticker(selectedId);
-        }
-      }
-    });
-
-    // ── BUTTONS ───────────────────────────────────────────────────────────────
-    deselectBtn.addEventListener('click', deselectSticker);
-    clearBtn.addEventListener('click', () => { clearLaptop(); toast('Laptop cleared.', 'ok'); });
-    exportBtn.addEventListener('click', exportComposition);
-
-    // ── EXPORT ────────────────────────────────────────────────────────────────
-    async function exportComposition() {
-      const scale = 2, W = 620, H = 400;
-      const canvas = document.createElement('canvas');
-      canvas.width = W * scale; canvas.height = H * scale;
-      const ctx = canvas.getContext('2d');
-      ctx.scale(scale, scale);
-
-      drawLaptopBg(ctx, W, H);
-      drawAsusText(ctx, W, H);
-
-      for (const s of stickers) {
-        const img = await loadImage(s.src);
-        ctx.save();
-        ctx.translate(s.x + s.w / 2, s.y + s.h / 2);
-        ctx.rotate(s.rot);
-        ctx.drawImage(img, -s.w / 2, -s.h / 2, s.w, s.h);
-        ctx.restore();
-      }
-
-      const a = document.createElement('a');
-      a.href     = canvas.toDataURL('image/png');
-      a.download = 'sticker-layout.png';
-      a.click();
-      toast('Exported ✓', 'ok');
-    }
-
-    function drawLaptopBg(ctx, w, h) {
-      const g = ctx.createLinearGradient(0,0,w,h);
-      g.addColorStop(0,    '#777');
-      g.addColorStop(0.15, '#5d5d5d');
-      g.addColorStop(0.34, '#9a9a9a');
-      g.addColorStop(0.54, '#626262');
-      g.addColorStop(0.7,  '#8b8b8b');
-      g.addColorStop(1,    '#535353');
-      ctx.fillStyle = g;
-      roundRect(ctx,0,0,w,h,28); ctx.fill();
-
-      const hl = ctx.createRadialGradient(w*0.3,h*0.18,10,w*0.3,h*0.18,w*0.46);
-      hl.addColorStop(0,  'rgba(255,255,255,0.28)');
-      hl.addColorStop(0.3,'rgba(255,255,255,0.06)');
-      hl.addColorStop(1,  'rgba(255,255,255,0)');
-      ctx.fillStyle = hl;
-      roundRect(ctx,0,0,w,h,28); ctx.fill();
-
-      ctx.save();
-      roundRect(ctx,0,0,w,h,28); ctx.clip();
-      for (let y=0; y<h; y+=6) {
-        ctx.fillStyle = y%12===0 ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)';
-        ctx.fillRect(0,y,w,2);
-      }
-      ctx.restore();
-
-      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-      ctx.lineWidth = 1;
-      roundRect(ctx,0.5,0.5,w-1,h-1,28); ctx.stroke();
-    }
-
-    function drawAsusText(ctx, w, h) {
-      ctx.save();
-      ctx.translate(w/2, h/2);
-      ctx.fillStyle = 'rgba(255,255,255,0.16)';
-      ctx.font = 'italic 700 62px "IBM Plex Mono",monospace';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('ASUS', 0, 0);
-      ctx.restore();
-    }
-
-    function roundRect(ctx, x, y, w, h, r) {
-      ctx.beginPath();
-      ctx.moveTo(x+r, y);
-      ctx.arcTo(x+w, y,   x+w, y+h, r);
-      ctx.arcTo(x+w, y+h, x,   y+h, r);
-      ctx.arcTo(x,   y+h, x,   y,   r);
-      ctx.arcTo(x,   y,   x+w, y,   r);
-      ctx.closePath();
-    }
-
-    // ── INIT RENDER ───────────────────────────────────────────────────────────
-    renderTray();
-    renderStickers();
-  </script>
+  <script src="js/app.js"></script>
 </body>
 </html>

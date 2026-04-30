@@ -11,15 +11,19 @@
 </head>
 <body>
 
-  <!-- ── API KEY MODAL ─────────────────────────────────────────────── -->
-  <div class="modal-backdrop" id="apiModal">
+  <div class="status-bar" role="status" aria-live="polite">
+    <span class="status-dot" id="backendDot"></span>
+    <span id="backendStatusText">Checking backend connection...</span>
+  </div>
+
+  <div class="modal-backdrop" id="apiModal" aria-modal="true" role="dialog">
     <div class="modal">
-      <div class="modal-logo">// sticker_planner</div>
+      <div class="modal-logo">sticker_planner</div>
       <h2>API Key Required</h2>
       <div class="modal-steps">
         <div class="modal-step">
           <div class="modal-step-num">1</div>
-          <div>Go to <a href="https://www.remove.bg/users/sign_up" target="_blank">remove.bg</a> and create a free account — 50 free credits/month.</div>
+          <div>Go to <a href="https://www.remove.bg/users/sign_up" target="_blank">remove.bg</a> and create a free account - 50 free credits/month.</div>
         </div>
         <div class="modal-step">
           <div class="modal-step-num">2</div>
@@ -27,14 +31,14 @@
         </div>
         <div class="modal-step">
           <div class="modal-step-num">3</div>
-          <div>Paste it below — saved locally, you won't be asked again.</div>
+          <div>Paste it below - saved locally, you won't be asked again.</div>
         </div>
       </div>
       <div class="modal-divider"></div>
       <div class="modal-input-wrap">
-        <div class="modal-input-label">Your API Key</div>
+        <label class="modal-input-label" for="modalKeyInput">Your API Key</label>
         <div class="modal-input-row">
-          <input type="password" id="modalKeyInput" placeholder="e.g. ZYeBdJ4J5Gw4qeZ9nmq…" autocomplete="off" spellcheck="false" />
+          <input type="password" id="modalKeyInput" placeholder="e.g. ZYeBdJ4J5Gw4qeZ9nmq..." autocomplete="off" spellcheck="false" />
           <button class="modal-submit" id="modalSubmit">Verify</button>
         </div>
         <div class="modal-status" id="modalStatus"></div>
@@ -42,105 +46,89 @@
     </div>
   </div>
 
-  <!-- ── APP SHELL ──────────────────────────────────────────────────── -->
   <div class="app">
     <aside class="sidebar">
-
-      <!-- Uploads -->
       <section class="panel">
         <h3>Uploads</h3>
         <div class="upload-grid">
-          <label class="upload-zone" id="autoZone">
-            <input id="autoInput" type="file" accept="image/*" multiple />
-            <div><strong>Add Photos</strong><span>Any format.<br>BG removed auto.</span></div>
+          <label class="upload-zone" id="autoZone" aria-label="Upload photos for automatic background removal">
+            <input id="autoInput" type="file" accept="image/*" multiple aria-label="Add photos" />
+            <div><strong>Photos</strong><span>Any format.<br>Background removed automatically.</span></div>
           </label>
-          <label class="upload-zone" id="precutZone">
-            <input id="precutInput" type="file" accept="image/png,image/webp" multiple />
-            <div><strong>Pre-cut PNG</strong><span>PNG / WEBP only.<br>Added directly.</span></div>
+          <label class="upload-zone" id="precutZone" aria-label="Upload pre-cut sticker files">
+            <input id="precutInput" type="file" accept="image/png,image/webp" multiple aria-label="Add pre-cut PNG or WEBP" />
+            <div><strong>Transparent PNG</strong><span>PNG / WEBP only.<br>Added directly.</span></div>
           </label>
         </div>
       </section>
 
-      <!-- Sticker Tray -->
       <section class="panel tray-wrap">
         <h3>Sticker Tray</h3>
         <p>Drag stickers onto the laptop lid.</p>
         <div id="tray" class="tray"></div>
       </section>
 
-      <!-- Phase 3: Sticker Packs -->
       <section class="panel">
         <h3>Sticker Packs</h3>
         <p>Click any sticker to add it to your tray.</p>
         <div id="packGrid" class="pack-grid"></div>
       </section>
 
-      <!-- Phase 1 & 2: Actions -->
       <section class="panel">
         <h3>Actions</h3>
         <div class="actions">
-          <!-- Phase 1: Undo/Redo -->
-          <button id="undoBtn" title="Ctrl+Z">↩ Undo</button>
-          <button id="redoBtn" title="Ctrl+Y">↪ Redo</button>
-          <!-- Phase 1: Layer controls -->
-          <button id="layerUpBtn">▲ Forward</button>
-          <button id="layerDownBtn">▼ Backward</button>
-          <!-- Phase 1: Flip -->
-          <button id="flipHBtn">↔ Flip H</button>
-          <button id="flipVBtn">↕ Flip V</button>
-          <!-- Phase 2: Snap to grid -->
-          <button id="snapToggle">⊞ Snap Grid</button>
-          <!-- Phase 3: Share link -->
-          <button id="shareLinkBtn">🔗 Share Link</button>
-          <!-- Phase 3: Export (full width) -->
-          <button id="exportBtn" class="full">⬇ Export as PNG</button>
+          <button id="undoBtn" title="Ctrl+Z">Undo</button>
+          <button id="redoBtn" title="Ctrl+Y">Redo</button>
+          <button id="layerUpBtn">Forward</button>
+          <button id="layerDownBtn">Backward</button>
+          <button id="flipHBtn">Flip H</button>
+          <button id="flipVBtn">Flip V</button>
+          <button id="snapToggle">Snap Grid</button>
+          <button id="shareLinkBtn">Share Link</button>
+          <button id="exportBtn" class="full">Export</button>
           <button id="deselectBtn" class="full">Deselect</button>
-          <button id="clearBtn" class="danger full">Clear Laptop</button>
+          <button id="clearBtn" class="danger full">Clear</button>
         </div>
       </section>
 
-      <!-- Phase 2: Swap Device -->
       <section class="panel">
         <h3>Swap Device</h3>
         <p>Upload any device image as your canvas.</p>
-        <label class="upload-zone" style="min-height:80px;margin-top:8px;">
-          <input id="deviceInput" type="file" accept="image/*" />
-          <div><strong>Upload Device PNG</strong><span>MacBook, Surface, etc.</span></div>
+        <label class="upload-zone" style="min-height:80px;margin-top:8px;" aria-label="Upload custom device image">
+          <input id="deviceInput" type="file" accept="image/*" aria-label="Upload device image" />
+          <div><strong>Upload Device Image</strong><span>MacBook, Surface, etc.</span></div>
         </label>
       </section>
 
-      <!-- Phase 2: Tint selected sticker -->
       <section class="panel">
         <h3>Sticker Tint</h3>
-        <p>Select a sticker to adjust its appearance.</p>
+        <p>Select a sticker to adjust hue, saturation, and brightness.</p>
         <div id="tintPanel" class="tint-panel">
           <div class="tint-row">
-            <label>Hue</label>
+            <label for="hueSlider">Hue</label>
             <input type="range" id="hueSlider" min="0" max="360" value="0" />
             <span id="hueVal">0°</span>
           </div>
           <div class="tint-row">
-            <label>Saturation</label>
+            <label for="satSlider">Saturation</label>
             <input type="range" id="satSlider" min="0" max="200" value="100" />
             <span id="satVal">100%</span>
           </div>
           <div class="tint-row">
-            <label>Brightness</label>
+            <label for="brSlider">Brightness</label>
             <input type="range" id="brSlider" min="20" max="200" value="100" />
             <span id="brVal">100%</span>
           </div>
         </div>
       </section>
-
     </aside>
 
-    <!-- ── STAGE ────────────────────────────────────────────────────── -->
     <main class="main">
       <div class="stage" id="stage">
         <div class="stage-grid"></div>
         <div id="laptop" class="laptop" aria-label="Laptop sticker canvas">
           <div class="asus-logo">ASUS</div>
-          <div class="laptop-hint">Drop stickers here • Shift+click to multi-select</div>
+          <div class="laptop-hint" id="canvasHint">Drop images here or choose from the tray.</div>
           <div id="dropOverlay" class="drop-overlay">Drop Sticker</div>
           <div id="stickerLayer" class="sticker-layer">
             <div id="selectionBox"></div>

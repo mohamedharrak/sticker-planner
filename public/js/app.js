@@ -2,11 +2,11 @@
    app.js — Sticker Placement Planner
    Features: Undo/Redo, Layers, Save, Flip, Tint, Swap Device,
              Multi-select, Snap-to-grid, Share link, Packs, Export
-   Backend: FastAPI + MongoDB (full sync)
+   Backend: Node.js + Express (in-memory)
    ═══════════════════════════════════════════════════════════════════ */
 
 /* ── API CONFIG ────────────────────────────────────────────────────── */
-const API = 'http://127.0.0.1:8000';
+const API = '/api';
 
 /* ── ELEMENTS ──────────────────────────────────────────────────────── */
 const tray = document.getElementById('tray');
@@ -40,6 +40,9 @@ const hueVal = document.getElementById('hueVal');
 const satVal = document.getElementById('satVal');
 const brVal = document.getElementById('brVal');
 const packGrid = document.getElementById('packGrid');
+const backendDot = document.getElementById('backendDot');
+const backendStatusText = document.getElementById('backendStatusText');
+const canvasHint = document.getElementById('canvasHint');
 
 /* ── STATE ─────────────────────────────────────────────────────────── */
 let removeBgKey = '';
@@ -57,49 +60,74 @@ let redoStack = [];
 let backendOnline = false;
 const GRID = 24;
 
+function setBackendStatus(online) {
+  if (!backendDot || !backendStatusText) return;
+  backendDot.classList.remove('online', 'offline');
+  backendDot.classList.add(online ? 'online' : 'offline');
+  backendStatusText.textContent = online
+    ? 'Backend connected. In-memory API active.'
+    : 'Backend offline. Running local fallback mode.';
+}
+function updateCanvasHint() {
+  if (!canvasHint) return;
+  if (!stickers.length) {
+    canvasHint.classList.add('empty');
+    canvasHint.textContent = 'Canvas is empty. Drag from tray or drop files to start.';
+    return;
+  }
+  canvasHint.classList.remove('empty');
+  canvasHint.textContent = 'Drop stickers here - Shift+click to multi-select';
+}
+
 /* ════════════════════════════════════════════════════════════════════
    BACKEND API LAYER
    ════════════════════════════════════════════════════════════════════ */
 async function apiGet(path) {
   const res = await fetch(API + path);
-  if (!res.ok) throw new Error(`GET ${path} → ${res.status}`);
-  return res.json();
+  const payload = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(payload.error || `GET ${path} -> ${res.status}`);
+  return payload;
 }
 async function apiPost(path, body) {
   const res = await fetch(API + path, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
   });
-  if (!res.ok) throw new Error(`POST ${path} → ${res.status}`);
-  return res.json();
+  const payload = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(payload.error || `POST ${path} -> ${res.status}`);
+  return payload;
 }
 async function apiPut(path, body) {
   const res = await fetch(API + path, {
     method: 'PUT', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
   });
-  if (!res.ok) throw new Error(`PUT ${path} → ${res.status}`);
-  return res.json();
+  const payload = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(payload.error || `PUT ${path} -> ${res.status}`);
+  return payload;
 }
 async function apiDelete(path) {
   const res = await fetch(API + path, { method: 'DELETE' });
-  if (!res.ok) throw new Error(`DELETE ${path} → ${res.status}`);
-  return res.json();
+  const payload = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(payload.error || `DELETE ${path} -> ${res.status}`);
+  return payload;
 }
 
 async function checkBackend() {
   try {
     await apiGet('/health');
     backendOnline = true;
-    toast('Backend connected ✓', 'ok');
+    setBackendStatus(true);
+    toast('Backend connected', 'ok');
   } catch (_) {
     backendOnline = false;
-    toast('Backend offline — using localStorage', 'err');
+    setBackendStatus(false);
+    toast('Backend connection failed. Start the server with npm run dev.', 'err');
   }
 }
 
 async function loadFromBackend() {
-  if (!backendOnline) { loadLayout(); return; }
+  if (!backendOnline) { loadLayout(); renderStickers(); return; }
   try {
     const data = await apiGet('/stickers');
     stickers = data.stickers.map(s => ({
@@ -112,7 +140,7 @@ async function loadFromBackend() {
     stickerCounter = stickers.length + 1;
     renderStickers();
   } catch (err) {
-    toast('Failed to load from backend, using localStorage', 'err');
+    toast('Backend sync failed. Using local fallback data.', 'err');
     loadLayout();
   }
 }
@@ -289,6 +317,13 @@ function removeTrayItem(id) { trayItems = trayItems.filter(t => t.id !== id); re
 
 function renderTray() {
   tray.innerHTML = '';
+  if (!trayItems.length) {
+    const empty = document.createElement('div');
+    empty.className = 'tray-empty';
+    empty.textContent = 'No stickers yet. Upload one to fill your tray.';
+    tray.appendChild(empty);
+    return;
+  }
   trayItems.forEach(item => {
     const el = document.createElement('div');
     el.className = 'tray-item'; el.draggable = true; el.dataset.id = item.id;
@@ -416,6 +451,7 @@ async function applyTint(prop, val) {
    ════════════════════════════════════════════════════════════════════ */
 function renderStickers() {
   stickerLayer.querySelectorAll('.canvas-sticker').forEach(el => el.remove());
+  updateCanvasHint();
   stickers.forEach(sticker => {
     const isSelected = sticker.id === selectedId;
     const isMulti = multiSelected.has(sticker.id);
@@ -754,7 +790,11 @@ document.addEventListener('dragover', e => { if (dragGhost) moveGhost(e.clientX,
 window.addEventListener('keydown', e => {
   const tag = document.activeElement?.tagName;
   const typing = tag === 'INPUT' || tag === 'TEXTAREA' || (document.activeElement?.isContentEditable);
-  if (e.key === 'Escape') deselectSticker();
+  if (e.key === 'Escape') {
+    const modal = document.getElementById('apiModal');
+    if (modal && !modal.classList.contains('hidden')) modal.classList.add('hidden');
+    deselectSticker();
+  }
   if ((e.key === 'Delete' || e.key === 'Backspace') && selectedId && !typing) removeSticker(selectedId);
   if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey && !typing) { e.preventDefault(); undo(); }
   if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey)) && !typing) { e.preventDefault(); redo(); }
@@ -764,7 +804,12 @@ window.addEventListener('keydown', e => {
    BUTTON EVENTS
    ════════════════════════════════════════════════════════════════════ */
 deselectBtn.addEventListener('click', deselectSticker);
-clearBtn.addEventListener('click', () => { clearLaptop(); toast('Laptop cleared.', 'ok'); });
+clearBtn.addEventListener('click', async () => {
+  const confirmed = window.confirm('Clear all stickers from the laptop?');
+  if (!confirmed) return;
+  await clearLaptop();
+  toast('All stickers cleared.', 'ok');
+});
 exportBtn.addEventListener('click', exportComposition);
 undoBtn.addEventListener('click', undo);
 redoBtn.addEventListener('click', redo);
@@ -861,3 +906,4 @@ brSlider.addEventListener('input', () => { brVal.textContent = brSlider.value + 
   loadPacks();
   renderTray();
 })();
+

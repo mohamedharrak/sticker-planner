@@ -1,5 +1,10 @@
 # Sticker Planner
 
+## Preview
+
+![Preview](./public/files/preview.png)
+
+
 Sticker Planner is a full-stack vanilla web app for planning sticker layouts on a laptop/device image. It keeps the existing cyber dark UI and sticker workflow while using a Node.js + Express backend with temporary in-memory storage.
 
 ## Technologies

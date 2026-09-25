@@ -90,6 +90,7 @@ Errors are JSON:
 
 - Upload photos (remove.bg flow)
 - Upload pre-cut PNG/WEBP stickers
+- Use pre-cut stickers without a remove.bg API key; add a key when using photo background removal
 - Drag stickers from tray to laptop canvas
 - OS drag/drop image placement on canvas
 - Move, resize, rotate stickers
@@ -99,6 +100,7 @@ Errors are JSON:
 - Snap to grid toggle
 - Multi-select (Shift+click and drag box)
 - Share link hash encoding
+- Shared links open as a temporary editable preview without replacing the current backend layout
 - Export PNG
 - Clear all stickers (with confirmation)
 - Swap device image

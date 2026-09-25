@@ -58,6 +58,7 @@ let snapToGrid = false;
 let undoStack = [];
 let redoStack = [];
 let backendOnline = false;
+let sharedLayout = false;
 const GRID = 24;
 
 function setBackendStatus(online) {
@@ -146,7 +147,7 @@ async function loadFromBackend() {
 }
 
 async function apiSaveSticker(s) {
-  if (!backendOnline) return null;
+  if (!backendOnline || sharedLayout) return null;
   try {
     const res = await apiPost('/stickers', {
       name: s.name, category: s.category || 'custom',
@@ -159,7 +160,7 @@ async function apiSaveSticker(s) {
 }
 
 async function apiUpdateSticker(s) {
-  if (!backendOnline || !s.dbId) return;
+  if (!backendOnline || sharedLayout || !s.dbId) return;
   try {
     await apiPut(`/stickers/${s.dbId}`, {
       x: s.x, y: s.y, w: s.w, h: s.h,
@@ -170,13 +171,13 @@ async function apiUpdateSticker(s) {
 }
 
 async function apiDeleteSticker(s) {
-  if (!backendOnline || !s.dbId) return;
+  if (!backendOnline || sharedLayout || !s.dbId) return;
   try { await apiDelete(`/stickers/${s.dbId}`); }
   catch (err) { console.error('Delete sticker failed:', err); }
 }
 
 async function apiClearStickers() {
-  if (!backendOnline) return;
+  if (!backendOnline || sharedLayout) return;
   try { await apiDelete('/stickers'); } catch (_) { }
 }
 
@@ -207,6 +208,7 @@ function redo() {
    LOCALSTORAGE (fallback / mirror)
    ════════════════════════════════════════════════════════════════════ */
 function saveLayout() {
+  if (sharedLayout) return;
   localStorage.setItem('sticker_layout', JSON.stringify(stickers));
 }
 function loadLayout() {
@@ -245,6 +247,13 @@ function isPrecut(f) { return ['image/png', 'image/webp'].includes(f.type); }
 function isImage(f) { return f.type.startsWith('image/'); }
 function clamp(n, a, b) { return Math.min(b, Math.max(a, n)); }
 function snap(n) { return snapToGrid ? Math.round(n / GRID) * GRID : n; }
+function laptopPoint(clientX, clientY) {
+  const rect = laptop.getBoundingClientRect();
+  return {
+    x: (clientX - rect.left) * laptop.clientWidth / rect.width,
+    y: (clientY - rect.top) * laptop.clientHeight / rect.height
+  };
+}
 
 function fileToDataURL(file) {
   return new Promise((res, rej) => {
@@ -281,7 +290,10 @@ function stickerTransform(s) {
    REMOVE.BG API
    ════════════════════════════════════════════════════════════════════ */
 async function removeBg(file) {
-  if (!removeBgKey) throw new Error('No API key saved.');
+  if (!removeBgKey) {
+    document.getElementById('apiModal').classList.remove('hidden');
+    throw new Error('Set a remove.bg API key, then upload the photo again.');
+  }
   const fd = new FormData();
   fd.append('image_file', file, file.name || 'image');
   fd.append('size', 'auto');
@@ -298,7 +310,7 @@ async function removeBg(file) {
     throw new Error(msg);
   }
   const blob = await res.blob();
-  const src = URL.createObjectURL(blob);
+  const src = await fileToDataURL(blob);
   const img = await loadImage(src);
   return { src, width: img.naturalWidth, height: img.naturalHeight };
 }
@@ -362,10 +374,10 @@ function showDropOverlay(show) { dropOverlay.classList.toggle('visible', !!show)
    PLACE / SELECT / REMOVE STICKERS
    ════════════════════════════════════════════════════════════════════ */
 function placeStickerFromTray(item, clientX, clientY) {
-  const rect = laptop.getBoundingClientRect();
+  const point = laptopPoint(clientX, clientY);
   placeSticker({
     src: item.src, width: item.width, height: item.height,
-    x: clientX - rect.left, y: clientY - rect.top, name: item.name
+    x: point.x, y: point.y, name: item.name
   });
 }
 
@@ -479,9 +491,10 @@ function renderStickers() {
         else { multiSelected.add(sticker.id); if (selectedId) multiSelected.add(selectedId); selectedId = null; }
         renderStickers(); return;
       }
-      selectSticker(sticker.id); startMove(e, sticker.id);
+      if (!multiSelected.has(sticker.id)) selectSticker(sticker.id);
+      startMove(e, sticker.id);
     });
-    el.addEventListener('click', e => { e.stopPropagation(); if (!e.shiftKey) selectSticker(sticker.id); });
+    el.addEventListener('click', e => { e.stopPropagation(); if (!e.shiftKey && !multiSelected.has(sticker.id)) selectSticker(sticker.id); });
     stickerLayer.appendChild(el);
   });
 }
@@ -491,12 +504,13 @@ function renderStickers() {
    ════════════════════════════════════════════════════════════════════ */
 function startMove(e, id) {
   const s = getSticker(id); if (!s) return;
-  const lr = laptop.getBoundingClientRect();
-  const sx = e.clientX - lr.left - s.x, sy = e.clientY - lr.top - s.y;
+  const start = laptopPoint(e.clientX, e.clientY);
+  const sx = start.x - s.x, sy = start.y - s.y;
   const onMove = ev => {
     ev.preventDefault();
-    const nx = snap(clamp(ev.clientX - lr.left - sx, -s.w * 0.5, laptop.clientWidth - s.w * 0.5));
-    const ny = snap(clamp(ev.clientY - lr.top - sy, -s.h * 0.5, laptop.clientHeight - s.h * 0.5));
+    const point = laptopPoint(ev.clientX, ev.clientY);
+    const nx = snap(clamp(point.x - sx, -s.w * 0.5, laptop.clientWidth - s.w * 0.5));
+    const ny = snap(clamp(point.y - sy, -s.h * 0.5, laptop.clientHeight - s.h * 0.5));
     if (multiSelected.size > 0 && multiSelected.has(id)) {
       const dx = nx - s.x, dy = ny - s.y;
       multiSelected.forEach(sid => { const ms = getSticker(sid); if (ms) { ms.x = snap(ms.x + dx); ms.y = snap(ms.y + dy); } });
@@ -517,9 +531,8 @@ function startMove(e, id) {
 function startRotate(e, id) {
   const s = getSticker(id); if (!s) return;
   const onMove = ev => {
-    const rect = laptop.getBoundingClientRect();
-    const cx = rect.left + s.x + s.w / 2, cy = rect.top + s.y + s.h / 2;
-    s.rot = Math.atan2(ev.clientY - cy, ev.clientX - cx) + Math.PI / 2;
+    const point = laptopPoint(ev.clientX, ev.clientY);
+    s.rot = Math.atan2(point.y - s.y - s.h / 2, point.x - s.x - s.w / 2) + Math.PI / 2;
     renderStickers();
   };
   const onUp = () => {
@@ -533,9 +546,10 @@ function startRotate(e, id) {
 
 function startResize(e, id) {
   const s = getSticker(id); if (!s) return;
-  const sx = e.clientX, sy = e.clientY, sw = s.w, sh = s.h, asp = sw / sh;
+  const start = laptopPoint(e.clientX, e.clientY), sw = s.w, sh = s.h, asp = sw / sh;
   const onMove = ev => {
-    const delta = Math.max(ev.clientX - sx, ev.clientY - sy);
+    const point = laptopPoint(ev.clientX, ev.clientY);
+    const delta = Math.max(point.x - start.x, point.y - start.y);
     let nw = Math.max(24, sw + delta), nh = nw / asp;
     if (s.x + nw > laptop.clientWidth) { nw = laptop.clientWidth - s.x; nh = nw / asp; }
     if (s.y + nh > laptop.clientHeight) { nh = laptop.clientHeight - s.y; nw = nh * asp; }
@@ -558,13 +572,12 @@ let boxStart = { x: 0, y: 0 };
 stickerLayer.addEventListener('pointerdown', e => {
   if (e.target !== stickerLayer) return;
   e.preventDefault();
-  const lr = laptop.getBoundingClientRect();
-  boxStart = { x: e.clientX - lr.left, y: e.clientY - lr.top };
+  boxStart = laptopPoint(e.clientX, e.clientY);
   selectionBox.style.cssText = `left:${boxStart.x}px;top:${boxStart.y}px;width:0;height:0;`;
   selectionBox.classList.add('visible');
   const onMove = ev => {
-    const lr2 = laptop.getBoundingClientRect();
-    const cx = ev.clientX - lr2.left, cy = ev.clientY - lr2.top;
+    const point = laptopPoint(ev.clientX, ev.clientY);
+    const cx = point.x, cy = point.y;
     const x = Math.min(cx, boxStart.x), y = Math.min(cy, boxStart.y);
     const w = Math.abs(cx - boxStart.x), h = Math.abs(cy - boxStart.y);
     selectionBox.style.left = x + 'px'; selectionBox.style.top = y + 'px';
@@ -610,8 +623,8 @@ async function handlePrecutFiles(fileList) {
 }
 async function handleOSDrop(files, clientX, clientY) {
   const list = Array.from(files || []).filter(isImage); if (!list.length) return;
-  const rect = laptop.getBoundingClientRect();
-  const dx = clientX - rect.left, dy = clientY - rect.top;
+  const point = laptopPoint(clientX, clientY);
+  const dx = point.x, dy = point.y;
   for (const file of list) {
     try {
       if (isPrecut(file)) { const d = await fileToImageData(file); placeSticker({ src: d.src, width: d.width, height: d.height, x: dx, y: dy, name: file.name }); toast(`Placed: ${file.name}`, 'ok'); }
@@ -630,12 +643,17 @@ function encodeLayout() {
     w: Math.round(s.w), h: Math.round(s.h), rot: +s.rot.toFixed(4),
     flipH: s.flipH, flipV: s.flipV, hue: s.hue, sat: s.sat, br: s.br
   })).filter(s => s.src);
+  if (!payload.length) return '';
   return btoa(encodeURIComponent(JSON.stringify(payload)));
 }
 function loadFromHash() {
   try {
     const hash = location.hash.slice(1); if (!hash) return;
     const data = JSON.parse(decodeURIComponent(atob(hash)));
+    if (!Array.isArray(data)) return;
+    stickers = [];
+    sharedLayout = true;
+    backendStatusText.textContent = 'Shared layout preview. Your backend layout is preserved.';
     data.forEach(s => {
       if (s.src) stickers.push({
         id: `sticker-${stickerCounter++}`, dbId: null,
@@ -645,7 +663,7 @@ function loadFromHash() {
         hue: s.hue || 0, sat: s.sat || 100, br: s.br || 100
       });
     });
-    renderStickers(); toast('Layout loaded from share link ✓', 'ok');
+    renderStickers(); toast('Shared layout loaded', 'ok');
   } catch (_) { }
 }
 shareLinkBtn.addEventListener('click', () => {
@@ -777,6 +795,8 @@ stage.addEventListener('dragover', e => { e.preventDefault(); moveGhost(e.client
 stage.addEventListener('dragleave', e => { e.preventDefault(); dropDepth = Math.max(0, dropDepth - 1); if (!dropDepth) showDropOverlay(false); });
 stage.addEventListener('drop', async e => {
   e.preventDefault(); dropDepth = 0; showDropOverlay(false); destroyGhost();
+  const rect = laptop.getBoundingClientRect();
+  if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) return;
   const trayId = e.dataTransfer.getData('text/plain');
   const trayItem = trayItems.find(t => t.id === trayId);
   if (trayItem) { placeStickerFromTray(trayItem, e.clientX, e.clientY); return; }
@@ -836,6 +856,8 @@ brSlider.addEventListener('input', () => { brVal.textContent = brSlider.value + 
   const backdrop = document.getElementById('apiModal');
   const input = document.getElementById('modalKeyInput');
   const btn = document.getElementById('modalSubmit');
+  const openBtn = document.getElementById('apiKeyBtn');
+  const skipBtn = document.getElementById('modalSkip');
   const status = document.getElementById('modalStatus');
 
   function setStatus(msg, cls) {
@@ -889,9 +911,11 @@ brSlider.addEventListener('input', () => { brVal.textContent = brSlider.value + 
     btn.disabled = false;
   }
 
-  if (saved) { removeBgKey = saved; backdrop.classList.add('hidden'); }
-  else { backdrop.classList.remove('hidden'); }
+  if (saved) removeBgKey = saved;
+  backdrop.classList.add('hidden');
 
+  openBtn.addEventListener('click', () => backdrop.classList.remove('hidden'));
+  skipBtn.addEventListener('click', () => backdrop.classList.add('hidden'));
   btn.addEventListener('click', submit);
   input.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
 })();
@@ -901,8 +925,8 @@ brSlider.addEventListener('input', () => { brVal.textContent = brSlider.value + 
    ════════════════════════════════════════════════════════════════════ */
 (async function init() {
   await checkBackend();
-  loadFromHash();
   await loadFromBackend();
+  loadFromHash();
   loadPacks();
   renderTray();
 })();

@@ -178,6 +178,11 @@ button.active-btn {
   gap: 10px;
 }
 
+.key-button {
+  width: 100%;
+  margin-top: 10px;
+}
+
 .upload-zone {
   position: relative;
   min-height: 98px;
@@ -408,7 +413,7 @@ button.active-btn {
   position: absolute;
   inset: 0;
   z-index: 6;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .stage-grid {

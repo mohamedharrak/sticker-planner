@@ -19,7 +19,7 @@
   <div class="modal-backdrop" id="apiModal" aria-modal="true" role="dialog">
     <div class="modal">
       <div class="modal-logo">sticker_planner</div>
-      <h2>API Key Required</h2>
+      <h2>Remove photo backgrounds</h2>
       <div class="modal-steps">
         <div class="modal-step">
           <div class="modal-step-num">1</div>
@@ -42,6 +42,7 @@
           <button class="modal-submit" id="modalSubmit">Verify</button>
         </div>
         <div class="modal-status" id="modalStatus"></div>
+        <button id="modalSkip" type="button">Continue with pre-cut stickers</button>
       </div>
     </div>
   </div>
@@ -60,6 +61,7 @@
             <div><strong>Transparent PNG</strong><span>PNG / WEBP only.<br>Added directly.</span></div>
           </label>
         </div>
+        <button id="apiKeyBtn" class="key-button" type="button">Set remove.bg API key</button>
       </section>
 
       <section class="panel tray-wrap">
